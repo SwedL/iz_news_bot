@@ -1,42 +1,43 @@
 import sqlite3
 from typing import Dict, List
 from abc import ABC, abstractmethod
-
+from telebot import formatting
 import requests
+from pathlib import Path
 from bs4 import BeautifulSoup
 from news_sources.types import NewsData
 from fake_useragent import FakeUserAgent
 
 
-def read_file():
-    with open('./../iz_news', 'r', encoding='utf-8') as f:
-        input_data = f.read()
-        soup = BeautifulSoup(input_data, 'html.parser')
-    return soup
+# def read_file():
+#     with open('./../iz_news_text', 'r', encoding='utf-8') as f:
+#         input_data = f.read()
+#         soup = BeautifulSoup(input_data, 'lxml')
+#     return soup
+# self.parsed_source = read_file()
 
 
 class BaseNewsSource(ABC):
     SOURCE = ''
-    DATABASE = './../news.db'
+    DATABASE = Path(__file__).parent.parent / 'news.db'
 
     def __init__(self, url: str):
-        self.parsed_source = read_file()
         self.list_processed_news = []
         self.db = sqlite3.connect(self.DATABASE)
         self.cursor = self.db.cursor()
         self._create_database()
-        # self.parsed_source = BeautifulSoup(
-        #     requests.get(
-        #         url=url,
-        #         headers=self._get_headers(),
-        #     ).content,
-        #     features='lxml'
-        # )
+        self.parsed_source = BeautifulSoup(
+            requests.get(
+                url=url,
+                headers=self._get_headers(),
+            ).text,
+            features='html.parser'
+        )
 
     def get_news(self):
         raw_news = self._get_raw_today_news()
         self._raw_news_list(raw_news=raw_news)
-        self._filter_actual_news(self.list_processed_news)
+        self._filter_actual_news()
         self._sorted_news_list()
 
     @staticmethod
@@ -45,6 +46,10 @@ class BaseNewsSource(ABC):
         return {
             'User-Agent': ua.random
         }
+
+    @abstractmethod
+    def _get_footer(self):
+        pass
 
     def _create_database(self):
         with self.db:
@@ -73,7 +78,7 @@ class BaseNewsSource(ABC):
         pass
 
     @abstractmethod
-    def _filter_actual_news(self, list_processed_news: list) -> bool:
+    def _filter_actual_news(self) -> None:
         pass
 
     @abstractmethod

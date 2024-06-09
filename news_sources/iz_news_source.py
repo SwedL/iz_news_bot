@@ -3,7 +3,7 @@ from typing import List
 from bs4 import BeautifulSoup
 from telebot import formatting
 from datetime import datetime, timedelta
-
+from pathlib import Path
 from news_sources.base_news_sources import BaseNewsSource
 from news_sources.types import NewsData
 from pprint import pprint
@@ -22,6 +22,7 @@ import sqlite3
 class IZNewsSource(BaseNewsSource):
     SOURCE_MAIN_URL = 'https://iz.ru/news'
     SOURCE = 'ИЗВЕСТИЯ IZ'
+    HASHTAG = 'НОВОСТИ IZ '
     DEFAULT_IMAGE_URL = 'https://cdn.iz.ru/sites/default/files/styles/310x220/public/default_images/DefaultPic11.jpg?itok=5sTOtm7a'
 
     def __init__(self):
@@ -30,10 +31,12 @@ class IZNewsSource(BaseNewsSource):
     def get_news(self):
         raw_news = self._get_raw_today_news()
         self._raw_news_list(raw_news=raw_news)
-        self._saving_news_to_database()
+        self._filter_actual_news()
         self._sorted_news_list()
+        self._saving_news_to_database()
 
     def _get_raw_today_news(self) -> List[BeautifulSoup]:
+        # res = self.parsed_source.find_all('div', 'node__cart__item show_views_and_comments')
         res = self.parsed_source.find_all('div', 'node__cart__item show_views_and_comments')
         return res
 
@@ -47,7 +50,6 @@ class IZNewsSource(BaseNewsSource):
                 'link': self._get_article_link(news),
                 'datetime': self._get_article_datetime(news),
             }
-
             self.list_processed_news.append(current_news)
 
     def _sorted_news_list(self):
@@ -59,12 +61,11 @@ class IZNewsSource(BaseNewsSource):
             self.cursor.executemany("""INSERT INTO news (category, summary, image_url, link, datetime)
             VALUES (?, ?, ?, ?, ?) """, rows_for_db)
 
-    def _filter_actual_news(self, list_processed_news: list) -> None:
+    def _filter_actual_news(self) -> None:
         with self.db:
             self.cursor.execute("SELECT * FROM news")
             db_news = self.cursor.fetchall()
-            print(db_news)
-            self.list_processed_news = filter(lambda n: tuple(n.values()) not in db_news, list_processed_news)
+            self.list_processed_news = list(filter(lambda n: tuple(n.values()) not in db_news, self.list_processed_news))
 
     def _get_article_category(self, news: BeautifulSoup) -> str:
         return news.find('a').text
@@ -89,7 +90,17 @@ class IZNewsSource(BaseNewsSource):
     def caption_message(self, news: dict) -> str:
         category = news['category']
         summary = news['summary']
-        return f'{formatting.hbold(category)}\n\n{summary}\n\nИсточник: {self.SOURCE}'
+        link = news['link']
+        row_list_message = [f'{formatting.hbold(category)}',
+                            summary,
+                            f'подробнее {formatting.hlink(" здесь ", link)}',
+                            f'Источник: {formatting.hlink(self.SOURCE, self.SOURCE_MAIN_URL)}',
+                            self._get_footer(),
+                            ]
+        return '\n\n'.join(row_list_message)
+
+    def _get_footer(self):
+        return f'#{self.HASHTAG} {formatting.hlink("Подписаться", "https://t.me/+pxWMeyikCNdjOGNi")}'
 
 
 if __name__ == '__main__':
