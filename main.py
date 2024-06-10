@@ -1,19 +1,62 @@
-from fake_useragent import FakeUserAgent
-from bs4 import BeautifulSoup
-import requests
+import asyncio
 
-ua = FakeUserAgent()
-url = 'https://iz.ru/news'
+from aiogram import Bot, Dispatcher
+from aiogram.types import Message, ContentType
+from core.handlers.basic import get_start, get_photo
+from core.settings import settings
+import os
+import logging
+from dotenv import load_dotenv
+from aiogram.filters import Command
+from aiogram import F
+
+load_dotenv()
 
 
-req = requests.get(
-        url=url,
-        headers={'User-Agent': ua.random}
+async def start_bot(bot: Bot):
+    await bot.send_message(settings.bots.admin_id, text='Бот запущен!')
+
+
+async def stop_bot(bot: Bot):
+    await bot.send_message(settings.bots.admin_id, text='Бот остановлен!')
+
+
+async def start():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - [%(levelname)s] - %(name)s - "
+               "(%(filename)s).%(funcName)s(%(lineno)d) - %(message)s"
     )
+    bot = Bot(token=settings.bots.bot_token)
 
-req.encoding = "utf-8"
+    dp = Dispatcher()
+    dp.startup.register(start_bot)
+    dp.shutdown.register(stop_bot)
+    dp.message.register(get_photo, F.photo)
+    dp.message.register(get_start, Command(commands=['start', 'run']))
 
-with open("iz_news", 'w', encoding="utf-8") as file:
-    file.write(req.text)
+    try:
+        await dp.start_polling(bot)
+    finally:
+        await bot.session.close()
 
-print(req.content)
+    chat_id = os.getenv('CHANNEL_ID')
+    # source = IZNewsSource()
+    # source.get_news()
+    # news_to_post = source.list_processed_news
+
+    # for news in news_to_post:
+    #     photo = requests.get(news.get('image_url', source.DEFAULT_IMAGE_URL)).content
+    #     caption = source.caption_message(news)
+    #
+    #     bot.send_photo(
+    #         chat_id=chat_id,
+    #         photo=photo,
+    #         caption=caption,
+    #     )
+    #     print(f'Новость {news["summary"]} была отправлена')
+    #     time.sleep(5)
+
+
+if __name__ == "__main__":
+    asyncio.run(start())

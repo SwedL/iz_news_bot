@@ -1,54 +1,65 @@
-import requests
-import telebot
-from telebot import TeleBot
+import asyncio
+
+# from news_sources.iz_news_source import IZNewsSource
+# import aiohttp
+from aiogram import Bot, Dispatcher
+from aiogram.types import Message
 import os
+import logging
 from dotenv import load_dotenv
-from news_sources.iz_news_source import IZNewsSource
-import time
 
 load_dotenv()
 
-bot = TeleBot(
-    token=os.getenv('API_TOKEN'),
-    parse_mode='html',
-    disable_web_page_preview=True,
+
+async def start_bot(bot: Bot):
+    await bot.send_message(342786961, text='Бот запущен!')
+
+
+async def stop_bot(bot: Bot):
+    await bot.send_message(342786961, text='Бот остановлен!')
+
+
+async def get_start(message: Message, bot: Bot):
+    await bot.send_message(message.from_user.id, f'Привет {message.from_user.first_name}. Рад тебя видеть!')
+    await message.answer(f'Привет {message.from_user.first_name}. Рад тебя видеть!')
+    await message.reply(f'Привет {message.from_user.first_name}. Рад тебя видеть!')
+
+
+async def start():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - [%(levelname)s] - %(name)s - "
+               "(%(filename)s).%(funcName)s(%(lineno)d) - %(message)s"
     )
-chat_id = os.getenv('CHANNEL_ID')
-source = IZNewsSource()
+    bot = Bot(token=os.getenv('API_TOKEN'))
 
+    dp = Dispatcher()
+    dp.startup.register(start_bot)
+    dp.shutdown.register(stop_bot)
+    dp.message.register(get_start)
 
-# # Handle '/start' and '/help'
-# @bot.message_handler(commands=['help', 'start'])
-# def send_welcome(message):
-#     bot.reply_to(message, """\
-# Hi there, I am EchoBot.
-# I am here to echo your kind words back to you. Just say anything nice and I'll say the exact same thing to you!\
-# """)
-#
-#
-# # Handle all other messages with content_type 'text' (content_types defaults to ['text'])
-# @bot.message_handler(func=lambda message: True)
-# def echo_message(message):
-#     bot.reply_to(message, message.text)
+    try:
+        await dp.start_polling(bot)
+    finally:
+        await bot.session.close()
 
+    chat_id = os.getenv('CHANNEL_ID')
+    # source = IZNewsSource()
+    # source.get_news()
+    # news_to_post = source.list_processed_news
 
-def main():
-    # bot.infinity_polling()
-    source.get_news()
-    news_to_post = source.list_processed_news
-
-    for news in news_to_post:
-        photo = requests.get(news.get('image_url', source.DEFAULT_IMAGE_URL)).content
-        caption = source.caption_message(news)
-
-        bot.send_photo(
-            chat_id=chat_id,
-            photo=photo,
-            caption=caption,
-        )
-        print(f'Новость {news["summary"]} была отправлена')
-        time.sleep(5)
+    # for news in news_to_post:
+    #     photo = requests.get(news.get('image_url', source.DEFAULT_IMAGE_URL)).content
+    #     caption = source.caption_message(news)
+    #
+    #     bot.send_photo(
+    #         chat_id=chat_id,
+    #         photo=photo,
+    #         caption=caption,
+    #     )
+    #     print(f'Новость {news["summary"]} была отправлена')
+    #     time.sleep(5)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(start())
