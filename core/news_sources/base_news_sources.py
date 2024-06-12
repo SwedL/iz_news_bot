@@ -1,20 +1,10 @@
 import sqlite3
 from typing import Dict, List
 from abc import ABC, abstractmethod
-from telebot import formatting
 import requests
 from pathlib import Path
 from bs4 import BeautifulSoup
-from news_sources.types import NewsData
 from fake_useragent import FakeUserAgent
-
-
-# def read_file():
-#     with open('./../iz_news_text', 'r', encoding='utf-8') as f:
-#         input_data = f.read()
-#         soup = BeautifulSoup(input_data, 'lxml')
-#     return soup
-# self.parsed_source = read_file()
 
 
 class BaseNewsSource(ABC):

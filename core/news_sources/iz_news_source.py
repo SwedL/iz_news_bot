@@ -1,13 +1,10 @@
 from typing import List
 
 from bs4 import BeautifulSoup
-from telebot import formatting
-from datetime import datetime, timedelta
-from pathlib import Path
-from news_sources.base_news_sources import BaseNewsSource
-from news_sources.types import NewsData
+from datetime import datetime
+from core.news_sources.base_news_sources import BaseNewsSource
 from pprint import pprint
-import sqlite3
+
 
 # db = sqlite3.connect('news.db')
 # cursor = db.cursor()
@@ -91,16 +88,16 @@ class IZNewsSource(BaseNewsSource):
         category = news['category']
         summary = news['summary']
         link = news['link']
-        row_list_message = [f'{formatting.hbold(category)}',
+        row_list_message = [f'{category}',
                             summary,
-                            f'подробнее {formatting.hlink(" здесь ", link)}',
-                            f'Источник: {formatting.hlink(self.SOURCE, self.SOURCE_MAIN_URL)}',
+                            # f'подробнее {" здесь ", link)}',
+                            # f'Источник: {formatting.hlink(self.SOURCE, self.SOURCE_MAIN_URL)}',
                             self._get_footer(),
                             ]
         return '\n\n'.join(row_list_message)
 
     def _get_footer(self):
-        return f'#{self.HASHTAG} {formatting.hlink("Подписаться", "https://t.me/+pxWMeyikCNdjOGNi")}'
+        return f'#{self.HASHTAG} {"Подписаться", "https://t.me/+pxWMeyikCNdjOGNi"}'
 
 
 if __name__ == '__main__':
