@@ -1,22 +1,13 @@
 from typing import List
-
+import sqlite3
 from bs4 import BeautifulSoup
 from datetime import datetime
 from core.news_sources.base_news_sources import BaseNewsSource
-from pprint import pprint
-
-
-# db = sqlite3.connect('news.db')
-# cursor = db.cursor()
-#
-# with db:
-#     cursor.execute("""CREATE TABLE IF NOT EXISTS news (
-#         summary text,
-#         date_time text
-#     )""")
+from pathlib import Path
 
 
 class IZNewsSource(BaseNewsSource):
+    DATABASE = Path(__file__).parent.parent.parent / 'iz_news.db'
     SOURCE_MAIN_URL = 'https://iz.ru/news'
     SOURCE = 'ИЗВЕСТИЯ IZ'
     HASHTAG = 'НОВОСТИ IZ '
@@ -24,6 +15,20 @@ class IZNewsSource(BaseNewsSource):
 
     def __init__(self):
         super().__init__(url=self.SOURCE_MAIN_URL)
+        self.db = sqlite3.connect(self.DATABASE)
+        self.cursor = self.db.cursor()
+        self._create_database()
+
+    # Создаём базу данных для хранения ранее опубликованных новостей, если она ещё не создана
+    def _create_database(self):
+        with self.db:
+            self.cursor.execute("""CREATE TABLE IF NOT EXISTS iz_news (
+            category text,
+            summary text,
+            image_url text,
+            link text,
+            datetime text
+            )""")
 
     def get_news(self):
         raw_news = self._get_raw_today_news()
@@ -33,7 +38,6 @@ class IZNewsSource(BaseNewsSource):
         self._saving_news_to_database()
 
     def _get_raw_today_news(self) -> List[BeautifulSoup]:
-        # res = self.parsed_source.find_all('div', 'node__cart__item show_views_and_comments')
         res = self.parsed_source.find_all('div', 'node__cart__item show_views_and_comments')
         return res
 
@@ -55,12 +59,12 @@ class IZNewsSource(BaseNewsSource):
     def _saving_news_to_database(self) -> None:
         rows_for_db = [tuple(n.values()) for n in self.list_processed_news]
         with self.db:
-            self.cursor.executemany("""INSERT INTO news (category, summary, image_url, link, datetime)
+            self.cursor.executemany("""INSERT INTO iz_news (category, summary, image_url, link, datetime)
             VALUES (?, ?, ?, ?, ?) """, rows_for_db)
 
     def _filter_actual_news(self) -> None:
         with self.db:
-            self.cursor.execute("SELECT * FROM news")
+            self.cursor.execute("SELECT * FROM iz_news")
             db_news = self.cursor.fetchall()
             self.list_processed_news = list(filter(lambda n: tuple(n.values()) not in db_news, self.list_processed_news))
 
@@ -100,8 +104,8 @@ class IZNewsSource(BaseNewsSource):
         return f'#{self.HASHTAG} {"Подписаться", "https://t.me/+pxWMeyikCNdjOGNi"}'
 
 
-if __name__ == '__main__':
-    iz = IZNewsSource()
-    iz.get_news()
-    pprint(iz.list_processed_news)
-    print(len(iz.list_processed_news))
+# if __name__ == '__main__':
+#     iz = IZNewsSource()
+#     iz.get_news()
+#     pprint(iz.list_processed_news)
+#     print(len(iz.list_processed_news))

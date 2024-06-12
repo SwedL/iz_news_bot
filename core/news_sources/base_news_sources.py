@@ -1,21 +1,15 @@
-import sqlite3
 from typing import Dict, List
 from abc import ABC, abstractmethod
 import requests
-from pathlib import Path
 from bs4 import BeautifulSoup
 from fake_useragent import FakeUserAgent
 
 
 class BaseNewsSource(ABC):
     SOURCE = ''
-    DATABASE = Path(__file__).parent.parent / 'news.db'
 
     def __init__(self, url: str):
         self.list_processed_news = []
-        self.db = sqlite3.connect(self.DATABASE)
-        self.cursor = self.db.cursor()
-        self._create_database()
         self.parsed_source = BeautifulSoup(
             requests.get(
                 url=url,
@@ -40,16 +34,6 @@ class BaseNewsSource(ABC):
     @abstractmethod
     def _get_footer(self):
         pass
-
-    def _create_database(self):
-        with self.db:
-            self.cursor.execute("""CREATE TABLE IF NOT EXISTS news (
-            category text,
-            summary text,
-            image_url text,
-            link text,
-            datetime text
-            )""")
 
     @abstractmethod
     def _get_raw_today_news(self) -> List[BeautifulSoup]:

@@ -12,7 +12,7 @@ from aiogram import F
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from core.handlers import apsched
 from datetime import datetime, timedelta
-# from core.news_sources.iz_news_source import IZNewsSource
+from core.news_sources.iz_news_source import IZNewsSource
 from core.utils.commands import set_commands
 
 load_dotenv()
@@ -28,7 +28,7 @@ class IzNews:
     def __init__(self):
         self.bot = Bot(token=settings.bots.bot_token)
         self.chat_id = settings.bots.admin_id
-        # self.source = IZNewsSource()
+        self.source = IZNewsSource()
 
     async def start_bot(self):
         await set_commands(self.bot)
@@ -46,10 +46,10 @@ class IzNews:
         dp.message.register(get_start, Command(commands=['start', 'run']))
 
         # Определяем периодические задачи для бота
-        scheduler.add_job(apsched.send_message_time, trigger='date', run_date=datetime.now() + timedelta(seconds=10),
-                          kwargs={'bot': self.bot, 'chat_id': self.chat_id})
+        scheduler.add_job(apsched.send_message_time, trigger='date', run_date=datetime.now() + timedelta(seconds=5),
+                          kwargs={'bot': self.bot, 'chat_id': self.chat_id, 'source': self.source})
         scheduler.add_job(apsched.send_message_interval, trigger='interval', seconds=30,
-                          kwargs={'bot': self.bot, 'chat_id': self.chat_id})
+                          kwargs={'bot': self.bot, 'chat_id': self.chat_id, 'source': self.source})
         scheduler.start()
 
         try:
@@ -60,8 +60,9 @@ class IzNews:
 
 if __name__ == "__main__":
     iz = IzNews()
-    try:
-        asyncio.run(iz.start())
-    except:
-        pass
+    asyncio.run(iz.start())
+    # try:
+    #     asyncio.run(iz.start())
+    # except:
+    #     pass
 
