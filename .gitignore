@@ -1,2 +1,5 @@
 .idea
 .env
+core/__pycache__/
+core/handlers/__pycache__/
+core/keyboards/__pycache__/
