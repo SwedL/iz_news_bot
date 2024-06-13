@@ -5,4 +5,5 @@ core/handlers/__pycache__/
 core/keyboards/__pycache__/
 core/news_sources/__pycache__/
 core/utils/__pycache__/
+core/middlewares/__pycache__/
 *.jpg

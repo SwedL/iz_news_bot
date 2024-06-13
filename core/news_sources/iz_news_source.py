@@ -81,14 +81,16 @@ class IZNewsSource:
 
     def filter_category(self) -> None:
         """Фильтруем новости, согласно списку выбранных рубрик в чат-боте"""
-        self.list_processed_news = list(filter(lambda n: n['category'] in self.news_category_filter, self.list_processed_news))
+        self.list_processed_news = list(
+            filter(lambda n: n['category'] in self.news_category_filter, self.list_processed_news))
 
     def filter_actual_news(self) -> None:
         """Оставляем в списке обработанных новостей новости, которые ранее небыли опубликованы"""
         with self.db:
             self.cursor.execute("SELECT * FROM iz_news")
             db_news = self.cursor.fetchall()
-            self.list_processed_news = list(filter(lambda n: tuple(n.values()) not in db_news, self.list_processed_news))
+            self.list_processed_news = list(
+                filter(lambda n: tuple(n.values()) not in db_news, self.list_processed_news))
 
     def sorted_news_list(self):
         """Сортируем список обработанных новостей согласно их дате и времени выхода"""
@@ -142,3 +144,5 @@ class IZNewsSource:
     def get_footer(self):
         """Создаём footer для поста"""
         return f'#{self.HASHTAG} {hlink("Подписаться", "https://t.me/+pxWMeyikCNdjOGNi")}'
+
+# TODO абстрактный класс
