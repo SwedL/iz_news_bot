@@ -14,6 +14,7 @@ from core.handlers import apsched
 from datetime import datetime, timedelta
 from core.news_sources.iz_news_source import IZNewsSource
 from core.utils.commands import set_commands
+from core.middlewares.filter_news_middleware import FilterNewsMiddleware
 
 load_dotenv()
 
@@ -41,6 +42,7 @@ class IzNews:
         dp = Dispatcher()
         scheduler = AsyncIOScheduler()
 
+        dp.message.middleware.register(FilterNewsMiddleware(self.source))  # изменение фильтра новостей
         dp.startup.register(self.run_bot)
         dp.shutdown.register(self.stop_bot)
         dp.message.register(get_start, Command(commands=['start', 'run']))
@@ -61,7 +63,6 @@ class IzNews:
 
 if __name__ == "__main__":
     iz = IzNews()
-    # asyncio.run(iz.start())
     try:
         asyncio.run(iz.main())
     except KeyboardInterrupt:

@@ -30,7 +30,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 reply_keyboard = ReplyKeyboardMarkup(keyboard=[
     [
-        KeyboardButton(text='Очистить рубрики'),
+        KeyboardButton(text='Удалить все рубрики'),
     ],
     [
         KeyboardButton(text='🌍'),

@@ -21,18 +21,22 @@ class IZNewsSource:
         self.list_processed_news = []
         self.db = sqlite3.connect(self.DATABASE)
         self.cursor = self.db.cursor()
-        self._create_database()
+        self.create_database()
         self.parsed_source = None
+        self.news_category_filter = ['Мир', 'Общество', 'Происшествия', 'Здоровье', 'Армия',
+                                     'Экономика', 'Политика', 'Недвижимость', 'Авто', 'Культура',
+                                     'Пресс-релизы', 'Спорт', 'Наука и техника', 'Туризм']
 
     @staticmethod
-    def _get_headers() -> Dict[str, str]:
+    def get_headers() -> Dict[str, str]:
         ua = FakeUserAgent()
         return {
             'User-Agent': ua.random
         }
 
     # Создаём базу данных для хранения ранее опубликованных новостей, если она ещё не создана
-    def _create_database(self):
+    def create_database(self):
+        """Создание базы данных для определения опубликованных ранее новостей"""
         with self.db:
             self.cursor.execute("""CREATE TABLE IF NOT EXISTS iz_news (
             category text,
@@ -43,65 +47,79 @@ class IZNewsSource:
             )""")
 
     async def get_parsed_source(self):
+        """Получаем содержимое страницы источника новостей"""
         async with aiohttp.ClientSession() as session:
-            async with session.get(url=self.SOURCE_MAIN_URL, headers=self._get_headers()) as response:
+            async with session.get(url=self.SOURCE_MAIN_URL, headers=self.get_headers()) as response:
                 text = await response.text()
                 return BeautifulSoup(text, features='html.parser')
 
     async def get_news(self):
-        self.parsed_source = await self.get_parsed_source()
-        raw_news = self._get_raw_today_news()
-        self._raw_news_list(raw_news=raw_news)
-        self._filter_actual_news()
-        self._sorted_news_list()
-        self._saving_news_to_database()
+        self.parsed_source = await self.get_parsed_source()  # получаем содержимое страницы новостей
+        self.news_list()  # получаем список новостей
+        self.filter_category()  # фильтруем новости, согласно списку выбранных рубрик в чат-боте
+        self.filter_actual_news()  # фильтруем от ранее опубликованных новостей
+        self.sorted_news_list()  # сортируем новости согласно времени их выхода
+        self.saving_news_to_database()  # сохраняем в БД для последующего для определения опубликованных ранее новостей
         await asyncio.sleep(0)
 
-    def _get_raw_today_news(self) -> List[BeautifulSoup]:
-        res = self.parsed_source.find_all('div', 'node__cart__item show_views_and_comments')
-        return res
+    def get_raw_today_news(self) -> List[BeautifulSoup]:
+        """Получаем список сырых новостей, из контента страницы, согласно классу тега"""
+        return self.parsed_source.find_all('div', 'node__cart__item show_views_and_comments')
 
-    def _raw_news_list(self, raw_news: List[BeautifulSoup]) -> None:
-        self.list_processed_news.clear()  # предварительно очищаем список обработанных новостей
-        for news in raw_news:
+    def news_list(self) -> None:
+        """Формируем список обработанных новостей из списка сырых новостей"""
+        self.list_processed_news.clear()  # при новом парсинге, очищаем старый список обработанных новостей
+        for news in self.get_raw_today_news():
             current_news = {
-                'category': self._get_article_category(news),
-                'summary': self._get_article_summary(news),
-                'image_url': self._get_article_image_url(news),
-                'link': self._get_article_link(news),
-                'datetime': self._get_article_datetime(news),
+                'category': self.get_article_category(news),
+                'summary': self.get_article_summary(news),
+                'image_url': self.get_article_image_url(news),
+                'link': self.get_article_link(news),
+                'datetime': self.get_article_datetime(news),
             }
             self.list_processed_news.append(current_news)
 
-    def _sorted_news_list(self):
-        self.list_processed_news.sort(key=lambda x: datetime(*map(int, x['datetime'].split())))
+    def filter_category(self) -> None:
+        """Фильтруем новости, согласно списку выбранных рубрик в чат-боте"""
+        self.list_processed_news = list(filter(lambda n: n['category'] in self.news_category_filter, self.list_processed_news))
 
-    def _saving_news_to_database(self) -> None:
-        rows_for_db = [tuple(n.values()) for n in self.list_processed_news]
-        with self.db:
-            self.cursor.executemany("""INSERT INTO iz_news (category, summary, image_url, link, datetime)
-            VALUES (?, ?, ?, ?, ?) """, rows_for_db)
-
-    def _filter_actual_news(self) -> None:
+    def filter_actual_news(self) -> None:
+        """Оставляем в списке обработанных новостей новости, которые ранее небыли опубликованы"""
         with self.db:
             self.cursor.execute("SELECT * FROM iz_news")
             db_news = self.cursor.fetchall()
             self.list_processed_news = list(filter(lambda n: tuple(n.values()) not in db_news, self.list_processed_news))
 
-    def _get_article_category(self, news: BeautifulSoup) -> str:
+    def sorted_news_list(self):
+        """Сортируем список обработанных новостей согласно их дате и времени выхода"""
+        self.list_processed_news.sort(key=lambda x: datetime(*map(int, x['datetime'].split())))
+
+    def saving_news_to_database(self) -> None:
+        """Сохраняем новости в базу данных для определения опубликованных ранее новостей """
+        rows_for_db = [tuple(n.values()) for n in self.list_processed_news]
+        with self.db:
+            self.cursor.executemany("""INSERT INTO iz_news (category, summary, image_url, link, datetime)
+            VALUES (?, ?, ?, ?, ?) """, rows_for_db)
+
+    def get_article_category(self, news: BeautifulSoup) -> str:
+        """Получаем рубрику новости"""
         return news.find('a').text
 
-    def _get_article_summary(self, news: BeautifulSoup) -> str:
+    def get_article_summary(self, news: BeautifulSoup) -> str:
+        """Получаем краткое описание новости"""
         return news.find('div', 'node__cart__item__inside__info__title small-title-style1').text.strip()
 
-    def _get_article_image_url(self, news: BeautifulSoup) -> str:
+    def get_article_image_url(self, news: BeautifulSoup) -> str:
+        """Получаем url изображения новости"""
         return 'https://' + news.find('img').get('data-src')[2:]
 
-    def _get_article_link(self, news: BeautifulSoup) -> str:
+    def get_article_link(self, news: BeautifulSoup) -> str:
+        """Получаем ссылку на новость, на ресурсе источника новостей"""
         first_part_url = self.SOURCE_MAIN_URL.rpartition('/')[0]
         return first_part_url + news.find('a', class_='node__cart__item__inside').get('href')
 
-    def _get_article_datetime(self, news: BeautifulSoup) -> str:
+    def get_article_datetime(self, news: BeautifulSoup) -> str:
+        """Получаем дату и время новости"""
         datetime_text = news.time.get('datetime')
         for symbol in '-ZT:':
             while symbol in datetime_text:
@@ -109,23 +127,18 @@ class IZNewsSource:
         return datetime_text.strip()
 
     def caption_message(self, news: dict) -> str:
+        """Создаём подпись для изображения поста"""
         category = news['category']
         summary = news['summary']
         link_news = news['link']
-        row_list_message = [f'{category}',
+        row_list_message = [f'<b>{category}</b>',
                             summary,
                             f'подробнее {hlink(" здесь ", link_news)}',
                             f'Источник: {hlink(self.SOURCE, self.SOURCE_MAIN_URL)}',
-                            self._get_footer(),
+                            self.get_footer(),
                             ]
         return '\n\n'.join(row_list_message)
 
-    def _get_footer(self):
+    def get_footer(self):
+        """Создаём footer для поста"""
         return f'#{self.HASHTAG} {hlink("Подписаться", "https://t.me/+pxWMeyikCNdjOGNi")}'
-
-
-# if __name__ == '__main__':
-#     iz = IZNewsSource()
-#     iz.get_news()
-#     pprint(iz.list_processed_news)
-#     print(len(iz.list_processed_news))
