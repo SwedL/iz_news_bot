@@ -17,7 +17,7 @@ async def send_message_interval(bot: Bot, chat_id: int, source: IZNewsSource):
 
 
 async def send_received_news(bot: Bot, chat_id: int, source: IZNewsSource):
-    source.get_news()
+    await source.get_news()
     news_to_post = source.list_processed_news
     print(news_to_post)
 

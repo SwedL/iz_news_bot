@@ -49,7 +49,7 @@ class IzNews:
         # Определяем периодические задачи для бота
         scheduler.add_job(apsched.send_message_time, trigger='date', run_date=datetime.now() + timedelta(seconds=5),
                           kwargs={'bot': self.bot, 'chat_id': self.chat_id, 'source': self.source})
-        scheduler.add_job(apsched.send_message_interval, trigger='interval', seconds=30,
+        scheduler.add_job(apsched.send_message_interval, trigger='interval', seconds=300,
                           kwargs={'bot': self.bot, 'chat_id': self.chat_id, 'source': self.source})
         scheduler.start()
 

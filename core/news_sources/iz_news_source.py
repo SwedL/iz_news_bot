@@ -1,13 +1,16 @@
-from typing import List
+import asyncio
+from typing import List, Dict
 import sqlite3
 from bs4 import BeautifulSoup
 from datetime import datetime
 from core.news_sources.base_news_sources import BaseNewsSource
 from pathlib import Path
 from aiogram.utils.markdown import hlink
+from fake_useragent import FakeUserAgent
+import aiohttp
 
 
-class IZNewsSource(BaseNewsSource):
+class IZNewsSource:
     DATABASE = Path(__file__).parent.parent.parent / 'iz_news.db'
     SOURCE_MAIN_URL = 'https://iz.ru/news'
     SOURCE = 'ИЗВЕСТИЯ IZ'
@@ -15,10 +18,18 @@ class IZNewsSource(BaseNewsSource):
     DEFAULT_IMAGE_URL = 'https://cdn.iz.ru/sites/default/files/styles/310x220/public/default_images/DefaultPic11.jpg?itok=5sTOtm7a'
 
     def __init__(self):
-        super().__init__(url=self.SOURCE_MAIN_URL)
+        self.list_processed_news = []
         self.db = sqlite3.connect(self.DATABASE)
         self.cursor = self.db.cursor()
         self._create_database()
+        self.parsed_source = None
+
+    @staticmethod
+    def _get_headers() -> Dict[str, str]:
+        ua = FakeUserAgent()
+        return {
+            'User-Agent': ua.random
+        }
 
     # Создаём базу данных для хранения ранее опубликованных новостей, если она ещё не создана
     def _create_database(self):
@@ -31,12 +42,20 @@ class IZNewsSource(BaseNewsSource):
             datetime text
             )""")
 
-    def get_news(self):
+    async def get_parsed_source(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url=self.SOURCE_MAIN_URL, headers=self._get_headers()) as response:
+                text = await response.text()
+                return BeautifulSoup(text, features='html.parser')
+
+    async def get_news(self):
+        self.parsed_source = await self.get_parsed_source()
         raw_news = self._get_raw_today_news()
         self._raw_news_list(raw_news=raw_news)
         self._filter_actual_news()
         self._sorted_news_list()
         self._saving_news_to_database()
+        await asyncio.sleep(0)
 
     def _get_raw_today_news(self) -> List[BeautifulSoup]:
         res = self.parsed_source.find_all('div', 'node__cart__item show_views_and_comments')
