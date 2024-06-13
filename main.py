@@ -2,7 +2,7 @@ import asyncio
 
 from aiogram import Bot, Dispatcher
 from aiogram.types import Message, ContentType
-from core.handlers.basic import get_start
+from core.handlers.basic import get_start, handler_messages
 from core.settings import settings
 import os
 import logging
@@ -30,20 +30,21 @@ class IzNews:
         self.chat_id = settings.bots.admin_id
         self.source = IZNewsSource()
 
-    async def start_bot(self):
+    async def run_bot(self):
         await set_commands(self.bot)
         await self.bot.send_message(settings.bots.admin_id, text='Бот запущен!')
 
     async def stop_bot(self):
         await self.bot.send_message(settings.bots.admin_id, text='Бот остановлен!')
 
-    async def start(self):
+    async def main(self):
         dp = Dispatcher()
         scheduler = AsyncIOScheduler()
 
-        dp.startup.register(self.start_bot)
+        dp.startup.register(self.run_bot)
         dp.shutdown.register(self.stop_bot)
         dp.message.register(get_start, Command(commands=['start', 'run']))
+        dp.message.register(handler_messages, F.text)
 
         # Определяем периодические задачи для бота
         scheduler.add_job(apsched.send_message_time, trigger='date', run_date=datetime.now() + timedelta(seconds=5),
@@ -60,9 +61,9 @@ class IzNews:
 
 if __name__ == "__main__":
     iz = IzNews()
-    asyncio.run(iz.start())
-    # try:
-    #     asyncio.run(iz.start())
-    # except:
-    #     pass
+    # asyncio.run(iz.start())
+    try:
+        asyncio.run(iz.main())
+    except KeyboardInterrupt:
+        print('exit')
 

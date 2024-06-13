@@ -28,6 +28,7 @@ async def send_received_news(bot: Bot, chat_id: int, source: IZNewsSource):
             chat_id=chat_id,
             photo=news.get('image_url', source.DEFAULT_IMAGE_URL),
             caption=caption,
+            parse_mode='html',
         )
         print(f'Новость {news["summary"]} была отправлена')
 

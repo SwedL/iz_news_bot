@@ -4,13 +4,14 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from core.news_sources.base_news_sources import BaseNewsSource
 from pathlib import Path
+from aiogram.utils.markdown import hlink
 
 
 class IZNewsSource(BaseNewsSource):
     DATABASE = Path(__file__).parent.parent.parent / 'iz_news.db'
     SOURCE_MAIN_URL = 'https://iz.ru/news'
     SOURCE = 'ИЗВЕСТИЯ IZ'
-    HASHTAG = 'НОВОСТИ IZ '
+    HASHTAG = 'НОВОСТИ_IZ '
     DEFAULT_IMAGE_URL = 'https://cdn.iz.ru/sites/default/files/styles/310x220/public/default_images/DefaultPic11.jpg?itok=5sTOtm7a'
 
     def __init__(self):
@@ -91,17 +92,17 @@ class IZNewsSource(BaseNewsSource):
     def caption_message(self, news: dict) -> str:
         category = news['category']
         summary = news['summary']
-        link = news['link']
+        link_news = news['link']
         row_list_message = [f'{category}',
                             summary,
-                            # f'подробнее {" здесь ", link)}',
-                            # f'Источник: {formatting.hlink(self.SOURCE, self.SOURCE_MAIN_URL)}',
+                            f'подробнее {hlink(" здесь ", link_news)}',
+                            f'Источник: {hlink(self.SOURCE, self.SOURCE_MAIN_URL)}',
                             self._get_footer(),
                             ]
         return '\n\n'.join(row_list_message)
 
     def _get_footer(self):
-        return f'#{self.HASHTAG} {"Подписаться", "https://t.me/+pxWMeyikCNdjOGNi"}'
+        return f'#{self.HASHTAG} {hlink("Подписаться", "https://t.me/+pxWMeyikCNdjOGNi")}'
 
 
 # if __name__ == '__main__':
