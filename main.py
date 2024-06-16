@@ -30,6 +30,7 @@ class IzNews:
         self.bot = Bot(token=settings.bots.bot_token)
         self.chat_id = settings.bots.admin_id
         self.source = IZNewsSource()
+        self.source.create_database()
 
     async def run_bot(self):
         await set_commands(self.bot)

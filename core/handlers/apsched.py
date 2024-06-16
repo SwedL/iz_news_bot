@@ -17,6 +17,8 @@ async def send_message_interval(bot: Bot, chat_id: int, source: IZNewsSource):
 async def send_received_news(bot: Bot, chat_id: int, source: IZNewsSource):
     """Функция получения новостей с новостного ресурса и их отправка в телеграм-канал"""
     await source.get_news()
+    source.filter_category()  # фильтруем новости, согласно списку выбранных рубрик в чат-боте
+    source.saving_news_to_database()  # сохраняем свежие новости в БД для последующего определения старых новостей
     news_to_post = source.list_processed_news
     print(len(news_to_post))
 

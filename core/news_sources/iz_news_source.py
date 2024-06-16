@@ -18,25 +18,19 @@ class IZNewsSource:
     DEFAULT_IMAGE_URL = 'https://cdn.iz.ru/sites/default/files/styles/310x220/public/default_images/DefaultPic11.jpg?itok=5sTOtm7a'
 
     def __init__(self):
-        self.list_processed_news = []
-        self.db = sqlite3.connect(self.DATABASE)
-        self.cursor = self.db.cursor()
-        self.create_database()
+        self.db = None
+        self.cursor = None
         self.parsed_source = None
+        self.list_processed_news = []
         self.news_category_filter = ['Мир', 'Общество', 'Происшествия', 'Здоровье', 'Армия',
                                      'Экономика', 'Политика', 'Недвижимость', 'Авто', 'Культура',
                                      'Пресс-релизы', 'Спорт', 'Наука и техника', 'Туризм']
 
-    @staticmethod
-    def get_headers() -> Dict[str, str]:
-        ua = FakeUserAgent()
-        return {
-            'User-Agent': ua.random
-        }
-
     # Создаём базу данных для хранения ранее опубликованных новостей, если она ещё не создана
     def create_database(self):
         """Создание базы данных для определения опубликованных ранее новостей"""
+        self.db = sqlite3.connect(self.DATABASE)
+        self.cursor = self.db.cursor()
         with self.db:
             self.cursor.execute("""CREATE TABLE IF NOT EXISTS iz_news (
             category text,
@@ -45,6 +39,13 @@ class IZNewsSource:
             link text,
             datetime text
             )""")
+
+    @staticmethod
+    def get_headers() -> Dict[str, str]:
+        ua = FakeUserAgent()
+        return {
+            'User-Agent': ua.random
+        }
 
     async def get_parsed_source(self):
         """Получаем содержимое страницы источника новостей"""
@@ -55,11 +56,8 @@ class IZNewsSource:
 
     async def get_news(self):
         self.parsed_source = await self.get_parsed_source()  # получаем содержимое страницы новостей
-        self.news_list()  # получаем список новостей
-        self.filter_category()  # фильтруем новости, согласно списку выбранных рубрик в чат-боте
-        self.filter_actual_news()  # фильтруем от ранее опубликованных новостей
+        self.news_list()  # формируем список обработанных новостей
         self.sorted_news_list()  # сортируем новости согласно времени их выхода
-        self.saving_news_to_database()  # сохраняем в БД для последующего для определения опубликованных ранее новостей
         await asyncio.sleep(0)
 
     def get_raw_today_news(self) -> List[BeautifulSoup]:
@@ -97,11 +95,19 @@ class IZNewsSource:
         self.list_processed_news.sort(key=lambda x: datetime(*map(int, x['datetime'].split())))
 
     def saving_news_to_database(self) -> None:
-        """Сохраняем новости в базу данных для определения опубликованных ранее новостей """
+        """Сохраняем свежие новости в базу данных для последующего определения опубликованных ранее новостей """
+        # выбираем только свежие новости из списка новостей
+        self.filter_actual_news()
+        # сохраняем свежие новости в базу данных
         rows_for_db = [tuple(n.values()) for n in self.list_processed_news]
         with self.db:
             self.cursor.executemany("""INSERT INTO iz_news (category, summary, image_url, link, datetime)
             VALUES (?, ?, ?, ?, ?) """, rows_for_db)
+
+    def clear_data_base(self):
+        """Удаляем все данные из базы данных"""
+        with self.db:
+            self.cursor.execute("""DELETE FROM iz_news""")
 
     def get_article_category(self, news: BeautifulSoup) -> str:
         """Получаем рубрику новости"""
