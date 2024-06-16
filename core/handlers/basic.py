@@ -22,6 +22,10 @@ async def handler_messages(message: Message, bot: Bot, source: IZNewsSource):
     news_category_filter = source.news_category_filter  # получаем список рубрик новостей
     message_text = message.text
 
+    if message_text == 'Показать все рубрики':
+        all_select_category = '\n'.join(news_category_filter)
+        await message.answer(f'Список выбранных рубрик:\n{all_select_category}')
+
     if message_text == 'Удалить все рубрики':
         source.news_category_filter.clear()
         await message.answer('Список рубрик пуст')

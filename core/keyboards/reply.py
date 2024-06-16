@@ -27,10 +27,11 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 #         KeyboardButton(text='Туризм'),
 #     ],
 # ], resize_keyboard=True)
-# TODO добавить кнопку показа списка рубрик (символы)
+
 reply_keyboard = ReplyKeyboardMarkup(keyboard=[
     [
         KeyboardButton(text='Удалить все рубрики'),
+        KeyboardButton(text='Показать все рубрики'),
     ],
     [
         KeyboardButton(text='🌍'),
