@@ -47,7 +47,7 @@ class IZNewsSource:
             'User-Agent': ua.random
         }
 
-    async def get_parsed_source(self):
+    async def get_parsed_source(self) -> BeautifulSoup:
         """Получаем содержимое страницы источника новостей"""
         async with aiohttp.ClientSession() as session:
             async with session.get(url=self.SOURCE_MAIN_URL, headers=self.get_headers()) as response:
