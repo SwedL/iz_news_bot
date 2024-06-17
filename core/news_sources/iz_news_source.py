@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Dict
+from typing import List, Dict, Tuple, Hashable
 import sqlite3
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -31,13 +31,7 @@ class IZNewsSource:
         self.db = sqlite3.connect(self.DATABASE)
         self.cursor = self.db.cursor()
         with self.db:
-            self.cursor.execute("""CREATE TABLE IF NOT EXISTS iz_news (
-            category text,
-            summary text,
-            image_url text,
-            link text,
-            datetime text
-            )""")
+            self.cursor.execute("""CREATE TABLE IF NOT EXISTS iz_news (hash_news int, datetime text)""")
 
     @staticmethod
     def get_headers() -> Dict[str, str]:
@@ -85,21 +79,25 @@ class IZNewsSource:
         self.list_processed_news = list(
             filter(lambda n: n['category'] in self.news_category_filter, self.list_processed_news))
 
+    @staticmethod
+    def hash_news(news_data: Dict) -> Tuple:
+        return hash(news_data['summary']), news_data['datetime']
+
     def filter_actual_news(self) -> None:
         """Оставляем в списке обработанных новостей новости, которые ранее небыли опубликованы"""
         with self.db:
             self.cursor.execute("SELECT * FROM iz_news")
             db_news = self.cursor.fetchall()
             self.list_processed_news = list(
-                filter(lambda n: tuple(n.values()) not in db_news, self.list_processed_news))
+                filter(lambda n: self.hash_news(n) not in db_news, self.list_processed_news))
 
     def saving_news_to_database(self) -> None:
         """Сохраняем свежие новости в базу данных для последующего определения опубликованных ранее новостей """
         self.filter_actual_news()  # выбираем только свежие новости из списка новостей
-        rows_for_db = [tuple(n.values()) for n in self.list_processed_news]  # сохраняем свежие новости в базу данных
+        rows_for_db = [self.hash_news(n) for n in self.list_processed_news]  # сохраняем свежие новости в базу данных
         with self.db:
-            self.cursor.executemany("""INSERT INTO iz_news (category, summary, image_url, link, datetime)
-            VALUES (?, ?, ?, ?, ?) """, rows_for_db)
+            self.cursor.executemany("""INSERT INTO iz_news (hash_news, datetime)
+            VALUES (?, ?) """, rows_for_db)
 
     def clear_data_base(self):
         """Удаляем все данные из базы данных"""
