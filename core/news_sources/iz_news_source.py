@@ -3,7 +3,6 @@ from typing import List, Dict
 import sqlite3
 from bs4 import BeautifulSoup
 from datetime import datetime
-from core.news_sources.base_news_sources import BaseNewsSource
 from pathlib import Path
 from aiogram.utils.markdown import hlink
 from fake_useragent import FakeUserAgent
@@ -54,12 +53,6 @@ class IZNewsSource:
                 text = await response.text()
                 return BeautifulSoup(text, features='html.parser')
 
-    async def get_news(self):
-        self.parsed_source = await self.get_parsed_source()  # получаем содержимое страницы новостей
-        self.news_list()  # формируем список обработанных новостей
-        self.sorted_news_list()  # сортируем новости согласно времени их выхода
-        await asyncio.sleep(0)
-
     def get_raw_today_news(self) -> List[BeautifulSoup]:
         """Получаем список сырых новостей, из контента страницы, согласно классу тега"""
         return self.parsed_source.find_all('div', 'node__cart__item show_views_and_comments')
@@ -77,6 +70,16 @@ class IZNewsSource:
             }
             self.list_processed_news.append(current_news)
 
+    def sorted_news_list(self):
+        """Сортируем список обработанных новостей согласно их дате и времени выхода"""
+        self.list_processed_news.sort(key=lambda x: datetime(*map(int, x['datetime'].split())))
+
+    async def get_news(self):
+        self.parsed_source = await self.get_parsed_source()  # получаем содержимое страницы новостей
+        self.news_list()  # формируем список обработанных новостей
+        self.sorted_news_list()  # сортируем новости согласно времени их выхода
+        await asyncio.sleep(0)
+
     def filter_category(self) -> None:
         """Фильтруем новости, согласно списку выбранных рубрик в чат-боте"""
         self.list_processed_news = list(
@@ -90,16 +93,10 @@ class IZNewsSource:
             self.list_processed_news = list(
                 filter(lambda n: tuple(n.values()) not in db_news, self.list_processed_news))
 
-    def sorted_news_list(self):
-        """Сортируем список обработанных новостей согласно их дате и времени выхода"""
-        self.list_processed_news.sort(key=lambda x: datetime(*map(int, x['datetime'].split())))
-
     def saving_news_to_database(self) -> None:
         """Сохраняем свежие новости в базу данных для последующего определения опубликованных ранее новостей """
-        # выбираем только свежие новости из списка новостей
-        self.filter_actual_news()
-        # сохраняем свежие новости в базу данных
-        rows_for_db = [tuple(n.values()) for n in self.list_processed_news]
+        self.filter_actual_news()  # выбираем только свежие новости из списка новостей
+        rows_for_db = [tuple(n.values()) for n in self.list_processed_news]  # сохраняем свежие новости в базу данных
         with self.db:
             self.cursor.executemany("""INSERT INTO iz_news (category, summary, image_url, link, datetime)
             VALUES (?, ?, ?, ?, ?) """, rows_for_db)
