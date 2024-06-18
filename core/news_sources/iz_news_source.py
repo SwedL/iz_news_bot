@@ -1,8 +1,8 @@
 import asyncio
-from typing import List, Dict, Tuple, Hashable
+from typing import List, Dict, Tuple
 import sqlite3
 from bs4 import BeautifulSoup
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from aiogram.utils.markdown import hlink
 from fake_useragent import FakeUserAgent
@@ -23,10 +23,11 @@ class IZNewsSource:
         self.list_processed_news = []
         self.news_category_filter = ['Мир', 'Общество', 'Происшествия', 'Здоровье', 'Армия',
                                      'Экономика', 'Политика', 'Недвижимость', 'Авто', 'Культура',
-                                     'Пресс-релизы', 'Спорт', 'Наука и техника', 'Туризм']
+                                     'Пресс-релизы', 'Спорт', 'Наука и техника', 'Туризм', 'Новости компаний']
 
     # Создаём базу данных для хранения ранее опубликованных новостей, если она ещё не создана
     def create_database(self):
+        # TODO сделать Asynsqlite3
         """Создание базы данных для определения опубликованных ранее новостей"""
         self.db = sqlite3.connect(self.DATABASE)
         self.cursor = self.db.cursor()
@@ -96,13 +97,24 @@ class IZNewsSource:
         self.filter_actual_news()  # выбираем только свежие новости из списка новостей
         rows_for_db = [self.hash_news(n) for n in self.list_processed_news]  # сохраняем свежие новости в базу данных
         with self.db:
-            self.cursor.executemany("""INSERT INTO iz_news (hash_news, datetime)
-            VALUES (?, ?) """, rows_for_db)
+            self.cursor.executemany("""INSERT INTO iz_news (hash_news, datetime) VALUES (?, ?)""", rows_for_db)
 
     def clear_data_base(self):
         """Удаляем все данные из базы данных"""
         with self.db:
             self.cursor.execute("""DELETE FROM iz_news""")
+
+    def delete_old_news_from_data_base(self):
+        """Удаляем старые новости из базы данных"""
+        date_time_yesterday = datetime.now() - timedelta(days=1)
+        date_time_yesterday_str = str(date_time_yesterday).split('.')[0]
+        print(date_time_yesterday_str)
+        for symbol in '-:':
+            while symbol in date_time_yesterday_str:
+                date_time_yesterday_str = date_time_yesterday_str.replace(symbol, ' ')
+        with self.db:
+            # TODO поменять тип данных
+            self.cursor.execute("""DELETE FROM iz_news WHERE datetime < ?""", (date_time_yesterday_str, ))
 
     def get_article_category(self, news: BeautifulSoup) -> str:
         """Получаем рубрику новости"""
@@ -145,5 +157,3 @@ class IZNewsSource:
     def get_footer(self):
         """Создаём footer для поста"""
         return f'#{self.HASHTAG} {hlink("Подписаться", "https://t.me/+pxWMeyikCNdjOGNi")}'
-
-# TODO абстрактный класс

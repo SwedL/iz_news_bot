@@ -50,9 +50,11 @@ class IzNews:
         dp.message.register(handler_messages, F.text)
 
         # Определяем периодические задачи для бота
-        scheduler.add_job(apsched.send_message_time, trigger='date', run_date=datetime.now() + timedelta(seconds=5),
+        # задача получает новости с новостного ресурса и размещает их в телеграм-канале, с интервалом в 5 минут
+        scheduler.add_job(apsched.send_message_interval, trigger='interval', next_run_time=datetime.now() + timedelta(seconds=5), seconds=300,
                           kwargs={'bot': self.bot, 'chat_id': self.chat_id, 'source': self.source})
-        scheduler.add_job(apsched.send_message_interval, trigger='interval', seconds=300,
+        # задача удаляет старые новости из базы данных 1 раз в неделю
+        scheduler.add_job(apsched.delete_old_news, trigger='interval', days=7,
                           kwargs={'bot': self.bot, 'chat_id': self.chat_id, 'source': self.source})
         scheduler.start()
 

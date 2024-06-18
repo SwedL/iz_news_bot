@@ -34,3 +34,8 @@ async def send_received_news(bot: Bot, chat_id: int, source: IZNewsSource):
         print(f'Новость {news["summary"]} была отправлена')
 
         await asyncio.sleep(5)
+
+
+async def delete_old_news(bot: Bot, chat_id: int, source: IZNewsSource):
+    source.delete_old_news_from_data_base()
+    await asyncio.sleep(0.5)
