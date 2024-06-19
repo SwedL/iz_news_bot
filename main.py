@@ -1,12 +1,9 @@
 import asyncio
 
 from aiogram import Bot, Dispatcher
-from aiogram.types import Message, ContentType
 from core.handlers.basic import get_start, handler_messages
 from core.settings import settings
-import os
 import logging
-from dotenv import load_dotenv
 from aiogram.filters import Command
 from aiogram import F
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -16,7 +13,6 @@ from core.news_sources.iz_news_source import IZNewsSource
 from core.utils.commands import set_commands
 from core.middlewares.filter_news_middleware import FilterNewsMiddleware
 
-load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -33,10 +29,12 @@ class IzNews:
         self.source.create_database()
 
     async def run_bot(self):
+        """Отправить соответствующее сообщение в канал чата, при запуске чат-бота"""
         await set_commands(self.bot)
         await self.bot.send_message(settings.bots.admin_id, text='Бот запущен!')
 
     async def stop_bot(self):
+        """Отправить соответствующее сообщение в канал чата, при остановке чат-бота"""
         await self.bot.send_message(settings.bots.admin_id, text='Бот остановлен!')
 
     async def main(self):
@@ -49,12 +47,12 @@ class IzNews:
         dp.message.register(get_start, Command(commands=['start', 'run']))
         dp.message.register(handler_messages, F.text)
 
-        # Определяем периодические задачи для бота
+        # Периодические задачи для бота
         # задача получает новости с новостного ресурса и размещает их в телеграм-канале, с интервалом в 5 минут
         scheduler.add_job(apsched.send_message_interval, trigger='interval', next_run_time=datetime.now() + timedelta(seconds=5), seconds=300,
                           kwargs={'bot': self.bot, 'chat_id': self.chat_id, 'source': self.source})
-        # задача удаляет старые новости из базы данных 1 раз в неделю
-        scheduler.add_job(apsched.delete_old_news, trigger='interval', days=7,
+        # задача удаляет старые новости из базы данных 1 раз в день
+        scheduler.add_job(apsched.delete_old_news, trigger='interval', days=1,
                           kwargs={'bot': self.bot, 'chat_id': self.chat_id, 'source': self.source})
         scheduler.start()
 

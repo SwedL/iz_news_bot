@@ -4,25 +4,21 @@ from aiogram import Bot
 from core.news_sources.iz_news_source import IZNewsSource
 
 
-async def send_message_time(bot: Bot, chat_id: int, source: IZNewsSource):
-    """Функция рассылки новостей через 5 секунд после старта бота"""
-    await send_received_news(bot, chat_id, source)
-
-
 async def send_message_interval(bot: Bot, chat_id: int, source: IZNewsSource):
-    """Функция рассылки новостей через каждые 5 минут"""
+    """Отправить сообщения, с интервалом в 5 минут"""
     await send_received_news(bot, chat_id, source)
 
 
 async def send_received_news(bot: Bot, chat_id: int, source: IZNewsSource):
-    """Функция получения новостей с новостного ресурса и их отправка в телеграм-канал"""
-    await source.get_news()
+    """Получить последние новости с новостного ресурса и отправить в телеграм-канал"""
+    await source.get_parsed_source()  # получаем содержимое страницы новостей
+    source.news_list()  # формируем список обработанных новостей
+    source.sorted_news_list()  # сортируем новости согласно времени их выхода
     source.filter_category()  # фильтруем новости, согласно списку выбранных рубрик в чат-боте
     source.saving_news_to_database()  # сохраняем свежие новости в БД для последующего определения старых новостей
-    news_to_post = source.list_processed_news
-    print(len(news_to_post))
+    print(len(source.list_processed_news))
 
-    for news in news_to_post:
+    for news in source.list_processed_news:
         caption = source.caption_message(news)
 
         await bot.send_photo(
@@ -37,5 +33,6 @@ async def send_received_news(bot: Bot, chat_id: int, source: IZNewsSource):
 
 
 async def delete_old_news(bot: Bot, chat_id: int, source: IZNewsSource):
+    """Удалить старые новости из базы данных"""
     source.delete_old_news_from_data_base()
     await asyncio.sleep(0.5)

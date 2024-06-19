@@ -43,10 +43,10 @@ class IZNewsSourceTestCase(unittest.IsolatedAsyncioTestCase):
         async with aiofiles.open(path, mode='r', encoding='utf-8') as f:
             text = await f.read()
             mock_parsed_source.return_value = BeautifulSoup(text, features='html.parser')
-        # print(mock_parsed_source.return_value)
         result = await self.source.get_news()
-        print(self.source.parsed_source)
-        # print(self.source.list_processed_news)
+        # print(self.source.parsed_source)
+        print(self.source.list_processed_news)
+        print(mock_parsed_source)
 
         self.assertIsNone(result)
 

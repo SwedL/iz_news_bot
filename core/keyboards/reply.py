@@ -1,32 +1,5 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-# reply_keyboard = ReplyKeyboardMarkup(keyboard=[
-#     [
-#         KeyboardButton(text='Очистить рубрики'),
-#     ],
-#     [
-#         KeyboardButton(text='Мир'),
-#         KeyboardButton(text='Общество'),
-#         KeyboardButton(text='ЧП'),
-#         KeyboardButton(text='Здоровье'),
-#         KeyboardButton(text='Армия'),
-#
-#     ],
-#     [
-#         KeyboardButton(text='Экономика'),
-#         KeyboardButton(text='Политика'),
-#         KeyboardButton(text='Недвижимость'),
-#         KeyboardButton(text='Авто'),
-#         KeyboardButton(text='Культура'),
-#
-#     ],
-# [
-#         KeyboardButton(text='Пресс-Релизы'),
-#         KeyboardButton(text='Спорт'),
-#         KeyboardButton(text='Наука и техника'),
-#         KeyboardButton(text='Туризм'),
-#     ],
-# ], resize_keyboard=True)
 
 reply_keyboard = ReplyKeyboardMarkup(keyboard=[
     [
