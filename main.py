@@ -1,18 +1,17 @@
 import asyncio
-
-from aiogram import Bot, Dispatcher
-from core.handlers.basic import get_start, handler_messages
-from core.settings import settings
 import logging
-from aiogram.filters import Command
-from aiogram import F
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from core.handlers import apsched
 from datetime import datetime, timedelta
-from core.news_sources.iz_news_source import IZNewsSource
-from core.utils.commands import set_commands
-from core.middlewares.filter_news_middleware import FilterNewsMiddleware
 
+from aiogram import Bot, Dispatcher, F
+from aiogram.filters import Command
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+from core.handlers import apsched
+from core.handlers.basic import get_start, handler_messages
+from core.middlewares.filter_news_middleware import FilterNewsMiddleware
+from core.news_sources.iz_news_source import IZNewsSource
+from core.settings import settings
+from core.utils.commands import set_commands
 
 logging.basicConfig(
     level=logging.INFO,
@@ -49,13 +48,21 @@ class IzNews:
 
         # Периодические задачи для бота
         # задача получает новости с новостного ресурса и размещает их в телеграм-канале, с интервалом в 5 минут
-        scheduler.add_job(apsched.send_message_interval, trigger='interval', next_run_time=datetime.now() + timedelta(seconds=5), seconds=300,
-                          kwargs={'bot': self.bot, 'chat_id': self.chat_id, 'source': self.source})
+        scheduler.add_job(
+            apsched.send_message_interval,
+            trigger='interval',
+            next_run_time=datetime.now() + timedelta(seconds=5),
+            seconds=300,
+            kwargs={'bot': self.bot, 'chat_id': self.chat_id, 'source': self.source},
+        )
         # задача удаляет старые новости из базы данных 1 раз в день
-        scheduler.add_job(apsched.delete_old_news, trigger='interval', seconds=360,
-                          kwargs={'source': self.source})
-        # scheduler.add_job(apsched.delete_old_news, trigger='interval', days=1,
-        #                   kwargs={'bot': self.bot, 'chat_id': self.chat_id, 'source': self.source})
+        scheduler.add_job(
+            apsched.delete_old_news,
+            trigger='interval',
+            seconds=360,
+            kwargs={'source': self.source},
+        )
+
         scheduler.start()
 
         try:
@@ -70,4 +77,3 @@ if __name__ == "__main__":
         asyncio.run(iz.main())
     except KeyboardInterrupt:
         print('exit')
-

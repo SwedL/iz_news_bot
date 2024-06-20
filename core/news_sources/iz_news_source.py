@@ -1,11 +1,12 @@
-from typing import List, Dict
 import sqlite3
-from bs4 import BeautifulSoup
 from datetime import datetime
 from pathlib import Path
-from aiogram.utils.markdown import hlink
-from fake_useragent import FakeUserAgent
+from typing import Dict, List
+
 import aiohttp
+from aiogram.utils.markdown import hlink
+from bs4 import BeautifulSoup
+from fake_useragent import FakeUserAgent
 
 
 class IZNewsSource:
@@ -84,7 +85,7 @@ class IZNewsSource:
     def saving_news_to_database(self):
         """Сохраняет свежие новости в базу данных, для последующего определения опубликованных ранее новостей """
         self.filter_actual_news()  # выбираем только свежие новости из списка новостей
-        rows_for_db = [(n['summary'], n['datetime']) for n in self.list_processed_news]  # сохраняем свежие новости в базу данных
+        rows_for_db = [(n['summary'], n['datetime']) for n in self.list_processed_news]  # сохраняем свежие новости в бд
         with self.db:
             self.cursor.executemany('INSERT INTO iz_news (summary, datetime) VALUES (?, ?)', rows_for_db)
 

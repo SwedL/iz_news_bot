@@ -1,6 +1,8 @@
+from typing import Any, Awaitable, Callable, Dict
+
 from aiogram import BaseMiddleware
 from aiogram.types import Message
-from typing import Dict, Any, Callable, Awaitable
+
 from core.news_sources.iz_news_source import IZNewsSource
 
 

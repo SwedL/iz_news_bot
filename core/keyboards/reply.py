@@ -1,5 +1,4 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
 # кнопки клавиатуры чат-бота
 reply_keyboard = ReplyKeyboardMarkup(keyboard=[

@@ -1,6 +1,7 @@
 import asyncio
 
 from aiogram import Bot
+
 from core.news_sources.iz_news_source import IZNewsSource
 
 
@@ -26,7 +27,7 @@ async def send_received_news(bot: Bot, chat_id: int, source: IZNewsSource):
             caption=caption,
             parse_mode='html',
         )
-        print(f'Новость {news["summary"]} была отправлена')
+        print(f'Новость >>{news["summary"]}<< была отправлена')
 
         await asyncio.sleep(5)
 

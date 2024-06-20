@@ -2,6 +2,7 @@ import asyncio
 
 from aiogram import Bot
 from aiogram.types import Message
+
 from core.keyboards.reply import reply_keyboard
 from core.news_sources.iz_news_source import IZNewsSource
 
@@ -10,13 +11,13 @@ category_news_dict = {'🌍': 'Мир', '👨‍👩‍👧‍👦': 'Общес
                       '📰': 'Пресс-релизы', '🏋🏽': 'Спорт', '🔭': 'Наука и техника', '⛱': 'Туризм'}
 
 
-async def get_start(message: Message, bot: Bot):
+async def get_start(message: Message):
     """При получении сообщения start - приветствует в сообщении и обновляет клавиатуру чат-бота"""
     await message.answer(f'Привет {message.from_user.first_name}. Рад тебя видеть!',
                          reply_markup=reply_keyboard)
 
 
-async def handler_messages(message: Message, bot: Bot, source: IZNewsSource):
+async def handler_messages(message: Message, source: IZNewsSource):
     """Проверяет полученное сообщение и если оно находится в словаре рубрик, добавляет/удаляет
     соответствующую рубрику из списка рубрик получаемых новостей"""
 
@@ -50,6 +51,3 @@ async def handler_messages(message: Message, bot: Bot, source: IZNewsSource):
             await message.answer('Список рубрик пуст')
 
     await asyncio.sleep(0)
-
-
-

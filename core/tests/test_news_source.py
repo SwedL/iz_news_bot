@@ -1,9 +1,7 @@
 import unittest
-import aiofiles
-from unittest.mock import patch
-from core.news_sources.iz_news_source import IZNewsSource
 from pathlib import Path
-from bs4 import BeautifulSoup
+
+from core.news_sources.iz_news_source import IZNewsSource
 
 
 class IZNewsSourceTestCase(unittest.IsolatedAsyncioTestCase):
@@ -25,7 +23,7 @@ class IZNewsSourceTestCase(unittest.IsolatedAsyncioTestCase):
         self.source.get_processed_news_list()  # формируем список обработанных новостей
         self.source.sorted_processed_news_list()  # сортируем новости согласно времени их выхода
         self.source.filter_category()  # фильтруем новости, согласно списку выбранных рубрик в чат-боте
-        self.source.saving_news_to_database()  # сохраняем свежие новости в БД для последующего определения старых новостей
+        self.source.saving_news_to_database()  # сохр. свежие новости в БД для последующего определения старых новостей
         proceed_news_list = self.source.list_processed_news
         first_proceed_news = proceed_news_list[0]
 
