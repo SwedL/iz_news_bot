@@ -29,12 +29,12 @@ class IzNews:
         self.source.create_database()
 
     async def run_bot(self):
-        """Отправить соответствующее сообщение в канал чата, при запуске чат-бота"""
+        """Отправляет соответствующее сообщение в канал чата, при запуске чат-бота"""
         await set_commands(self.bot)
         await self.bot.send_message(settings.bots.admin_id, text='Бот запущен!')
 
     async def stop_bot(self):
-        """Отправить соответствующее сообщение в канал чата, при остановке чат-бота"""
+        """Отправляет соответствующее сообщение в канал чата, при остановке чат-бота"""
         await self.bot.send_message(settings.bots.admin_id, text='Бот остановлен!')
 
     async def main(self):
@@ -52,8 +52,10 @@ class IzNews:
         scheduler.add_job(apsched.send_message_interval, trigger='interval', next_run_time=datetime.now() + timedelta(seconds=5), seconds=300,
                           kwargs={'bot': self.bot, 'chat_id': self.chat_id, 'source': self.source})
         # задача удаляет старые новости из базы данных 1 раз в день
-        scheduler.add_job(apsched.delete_old_news, trigger='interval', days=1,
-                          kwargs={'bot': self.bot, 'chat_id': self.chat_id, 'source': self.source})
+        scheduler.add_job(apsched.delete_old_news, trigger='interval', seconds=360,
+                          kwargs={'source': self.source})
+        # scheduler.add_job(apsched.delete_old_news, trigger='interval', days=1,
+        #                   kwargs={'bot': self.bot, 'chat_id': self.chat_id, 'source': self.source})
         scheduler.start()
 
         try:

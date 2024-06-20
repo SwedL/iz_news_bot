@@ -14,41 +14,29 @@ class IZNewsSourceTestCase(unittest.IsolatedAsyncioTestCase):
         self.source = IZNewsSource()
         self.source.DATABASE = Path(__file__).parent.parent.parent / 'iz_news_test.db'
         self.source.create_database()
-        # with open('iz_news_text', 'r', encoding='utf-8') as f:
-        #     self.mock_page = f.read()
         print('finish setUp')
 
-    # def tearDown(self):
-    #     print('Running tearDown')
-    #     self.source.clear_data_base()
-    #
-    # async def test_get_news(self):
-    #     await self.source.get_news()
-    #     self.source.saving_news_to_database()
-    #     proceed_news_list = self.source.list_processed_news
-    #     first_proceed_news = proceed_news_list[0]
-    #
-    #     # проверяем количество полученных новостей со страницы новостного источника
-    #     self.assertEqual(len(proceed_news_list), 16)
-    #
-    #     # проверяем ключи словаря первой новости
-    #     self.assertEqual(
-    #         list(first_proceed_news),
-    #         ['category', 'summary', 'image_url', 'link', 'datetime']
-    #     )
+    def tearDown(self):
+        print('Running tearDown')
+        self.source.clear_data_base()
 
-    @patch.object(IZNewsSource, 'get_parsed_source')
-    async def test_get_news_mock(self, mock_parsed_source):
-        path = Path(__file__).parent.parent.parent / 'iz_news_text'
-        async with aiofiles.open(path, mode='r', encoding='utf-8') as f:
-            text = await f.read()
-            mock_parsed_source.return_value = BeautifulSoup(text, features='html.parser')
-        result = await self.source.get_news()
-        # print(self.source.parsed_source)
-        print(self.source.list_processed_news)
-        print(mock_parsed_source)
+    async def test_get_news(self):
+        await self.source.get_parsed_source()  # получаем содержимое страницы новостей
+        self.source.get_processed_news_list()  # формируем список обработанных новостей
+        self.source.sorted_processed_news_list()  # сортируем новости согласно времени их выхода
+        self.source.filter_category()  # фильтруем новости, согласно списку выбранных рубрик в чат-боте
+        self.source.saving_news_to_database()  # сохраняем свежие новости в БД для последующего определения старых новостей
+        proceed_news_list = self.source.list_processed_news
+        first_proceed_news = proceed_news_list[0]
 
-        self.assertIsNone(result)
+        # проверяем количество полученных новостей со страницы новостного источника
+        self.assertEqual(len(proceed_news_list), 16)
+
+        # проверяем ключи словаря первой новости
+        self.assertEqual(
+            list(first_proceed_news),
+            ['category', 'summary', 'image_url', 'link', 'datetime']
+        )
 
 
 if __name__ == '__main__':

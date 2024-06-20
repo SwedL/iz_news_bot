@@ -5,6 +5,9 @@ from core.news_sources.iz_news_source import IZNewsSource
 
 
 class FilterNewsMiddleware(BaseMiddleware):
+    """Служит для отправки ссылки на экземпляр класса IZNewsSource, в обработчик сообщений чат-бота,
+    для доступа к фильтру рубрик"""
+
     def __init__(self, source: IZNewsSource) -> None:
         self.source = source
 
