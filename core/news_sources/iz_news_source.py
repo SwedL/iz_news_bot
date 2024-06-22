@@ -23,7 +23,7 @@ class IZNewsSource:
         self.list_processed_news = []
         self.news_category_filter = ['Мир', 'Общество', 'Происшествия', 'Здоровье', 'Армия',
                                      'Экономика', 'Политика', 'Недвижимость', 'Авто', 'Культура',
-                                     'Пресс-релизы', 'Спорт', 'Наука и техника', 'Туризм', 'Новости компаний']
+                                     'Пресс-релизы', 'Спорт', 'Наука и техника', 'Туризм']
 
     # Создаём базу данных для хранения ранее опубликованных новостей, если она ещё не создана
     def create_database(self):
@@ -65,7 +65,7 @@ class IZNewsSource:
             }
             self.list_processed_news.append(current_news)
 
-    def sorted_processed_news_list(self):
+    def sorting_processed_news_list(self):
         """Сортирует список обработанных новостей согласно их дате и времени выхода"""
         self.list_processed_news.sort(key=lambda x: datetime(*map(int, x['datetime'].split())))
 

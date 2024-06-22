@@ -1,6 +1,5 @@
 import asyncio
 
-from aiogram import Bot
 from aiogram.types import Message
 
 from core.keyboards.reply import reply_keyboard

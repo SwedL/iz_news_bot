@@ -14,7 +14,7 @@ async def send_received_news(bot: Bot, chat_id: int, source: IZNewsSource):
     """Получает последние новости с новостного ресурса и отправляет в телеграм-канал"""
     await source.get_parsed_source()  # получаем содержимое страницы новостей
     source.get_processed_news_list()  # формируем список обработанных новостей
-    source.sorted_processed_news_list()  # сортируем новости согласно времени их выхода
+    source.sorting_processed_news_list()  # сортируем новости согласно времени их выхода
     source.filter_category()  # фильтруем новости, согласно списку выбранных рубрик в чат-боте
     source.saving_news_to_database()  # сохраняем свежие новости в БД для последующего определения старых новостей
 
