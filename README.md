@@ -13,11 +13,11 @@
 Его задача, периодически получать последние новости с ресурса "ИЗВЕСТИЯ IZ" и публиковать в телеграм канале.
 
 <p align="center">
-<img src="https://i.ibb.co/5RFsxHT/tg-channel.jpg" alt="Main-logo" border="0" width="300">
-<img src="https://i.ibb.co/ygFK86S/tg-bot.jpg" alt="Main-logo" border="0" width="300">
+<img src="https://i.ibb.co/5RFsxHT/tg-channel.jpg" alt="Main-logo" border="0" width="250">
+<img src="https://i.ibb.co/ygFK86S/tg-bot.jpg" alt="Main-logo" border="0" width="250">
 </p>
 
-### Управление ботом:
+## Управление ботом:
 В чате самого бота реализовано меню управления.
 С помощью меню можно выбирать рубрики новостей, которые мы хотим
 публиковать в телеграм канале. 
