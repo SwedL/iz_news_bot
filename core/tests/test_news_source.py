@@ -4,7 +4,7 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-from core.news_sources.iz_news_source import IZNewsSource
+from ..news_sources.iz_news_source import IZNewsSource
 
 
 class IZNewsSourceTestCase(unittest.IsolatedAsyncioTestCase):
